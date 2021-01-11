@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Raport cantitate sau pret</title>
+    <link rel="stylesheet" th:href="@{/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/Footer-Basic.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+<nav class="navbar navbar-dark navbar-expand-md bg-success fixed-top">
+    <div class="container-fluid"><img class="logo" th:src="@{/img/Pill_256px.png}"><a class="navbar-brand"><strong>Demo project with Spring Boot, MonogoDB, Thymeleaf</strong></a>
+        <button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div
+                class="collapse navbar-collapse" id="navcol-1">
+            <ul class="nav navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="/select/toate">Lista de produse</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="table-title">
+    <h1>Produse cantitate mai mare sau egală ca <span th:text="${cantitate}">CANTITATE</span>
+     sau preț unitar mai mare sau egal ca <span th:text="${pret}">PRET</span> lei</h1>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>DENUMIRE COMERCIALA</th>
+            <th>PRODUCATOR</th>
+            <th>PRET</th>
+            <th>CANTITATE</th>
+            <th>VALOARE</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${produse}">
+            <td th:text="${p.denComerciala}">denComerciala</td>
+            <td th:text="${p.producator}">producator</td>
+            <td th:text="${p.pret} + ' lei'">pret</td>
+            <td th:text="${p.cantitate} + ' buc.'">cantitate</td>
+            <td th:text="${p.valoare}">valoare</td>
+        </tr>
+        <tr></tr>
+        </tbody>
+    </table>
+
+
+</div>
+<div class="footer-basic fixed-bottom">
+    <footer>
+        <p class="copyright">Costin Chelu © 2021</p>
+    </footer>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/bootstrap/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/bootbox.min.js}"></script>
+
+</body>
+
+</html>

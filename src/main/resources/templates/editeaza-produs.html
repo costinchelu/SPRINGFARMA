@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Editeaza produs</title>
+    <link rel="stylesheet" th:href="@{/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/footerProiectMongo.css}">
+    <link rel="stylesheet" th:href="@{/css/navBarProiectMongo.css}">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+<nav class="navbar navbar-dark navbar-expand-md bg-success fixed-top">
+    <div class="container-fluid"><img class="logo" th:src="@{/img/Pill_256px.png}"><a class="navbar-brand"><strong>Demo project with Spring Boot, MonogoDB, Thymeleaf</strong></a>
+        <button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div
+                class="collapse navbar-collapse" id="navcol-1">
+            <ul class="nav navbar-nav ml-auto">
+                <li class="nav-item"></li>
+                <li class="nav-item"></li>
+                <li class="nav-item"><a class="nav-link" href="/select/toate">Lista de produse</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="heading-div">
+    <h1>Editeaza detalii produs</h1>
+</div>
+<form action="#" method="post" th:action="@{/salvare}" th:object="${produs}">
+
+    <label>Denumirea comerciala</label>
+    <input class="form-control" type="text" th:field="*{denComerciala}">
+
+    <label>Producator</label>
+    <input class="form-control" type="text" th:field="*{producator}">
+
+    <label>Pret</label>
+    <input class="form-control" type="text" th:field="*{pret}">
+
+    <label>Cantitate</label>
+    <input class="form-control" type="text" th:field="*{cantitate}">
+
+    <label>Denumire comuna internațională</label>
+    <input class="form-control" type="text" th:field="*{dci.denDci}">
+
+    <label>Grupa ATC</label>
+    <input class="form-control" type="text" th:field="*{dci.grupaAtc}">
+
+    <label>Indicații</label>
+    <input class="form-control" type="text" th:field="*{indicatii}">
+
+    <label>Concentrație</label>
+    <input class="form-control" type="text" th:field="*{concentratie}">
+
+    <label>BBD (Best Before Date)</label>
+    <input class="form-control" type="date" th:field="*{bbdStr}">
+
+    <button class="btn btn-info submit-edit" type="submit" value="Submit">Salvează</button>
+
+    <input class="form-control" type="hidden" th:field="*{id}" readonly="readonly">
+
+
+</form>
+<div class="footer-basic fixed-bottom">
+    <footer>
+        <p class="copyright">Costin Chelu © 2021</p>
+    </footer>
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/bootstrap/js/bootstrap.min.js}"></script>
+</body>
+
+</html>

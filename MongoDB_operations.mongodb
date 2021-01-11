@@ -1,0 +1,454 @@
+// INSERT ->
+db.produse.insertOne(
+{
+    "denComerciala": "Algocalmin cp. 500mg",
+    "concentratie": "500 mg",
+    "producator": "Zentiva",
+    "pret": 7.43,
+    "cantitate": 40,
+    "bbd": "2022-04-30",
+    "dci": {
+        "denDci": "metamizolum natricum",
+        "grupaAtc": "N02BB02"
+    },
+    "indicatii": [
+        "analgezic", "antipiretic"
+        ]
+}
+)
+
+
+db.produse.insertMany([
+{
+    "denComerciala": "Bimagan 0,1 Mg/Ml",
+    "concentratie": "0,1 mg/ml",
+    "producator": "Rompharm",
+    "pret": 45.08,
+    "cantitate": 16,
+    "bbd": "2024-08-30",
+    "dci": {
+        "denDci": "bimatoprostum",
+        "grupaAtc": "S01EE03"
+    },
+    "indicatii": [
+        "antiglaucomatos", "miotic"
+        ]
+},
+{
+    "denComerciala": "Betabioptal 1,3 Mg/G + 2,5 Mg/G",
+    "concentratie": "1,3 Mg/G + 2,5 Mg/G",
+    "producator": "Thea",
+    "pret": 14.68,
+    "cantitate": 15,
+    "bbd": "2022-02-28",
+    "dci": {
+        "denDci": "betamethasonum + cloramphenicolum",
+        "grupaAtc": "D07CC01"
+    },
+    "indicatii": [
+        "antiinflamator", "corticosteroid", "antibiotic"
+        ]
+}
+])
+
+
+// UPDATE ->
+db.produse.updateOne(
+	{ _id: ObjectId("5fe8d3c6bcb2e50030a90d0f") }, 
+	{ $set: {
+        "denComerciala": "Dicarbocalm Control",
+        "concentratie": "20 mg",
+        "pret": 35,
+        "cantitate": NumberInt(25),
+    }
+})
+
+
+db.produse.updateOne(
+	{ denComerciala: /^Bilobil 40/ }, 
+	{ $set: {
+		cantitate: 6
+	}
+})
+
+
+db.produse.updateMany(
+	{ "dci.denDci": /metamizolum/i }, 
+	{ $push: {
+		indicatii: "antiinflamator"
+	}
+})
+
+
+
+// DELETE ->
+db.produse.deleteOne({
+    "denComerciala": /^Cefuroxima/
+})
+
+
+// SELECT ->
+db.produse.find( 
+    { 
+      producator: {$in: ["Terapia", "KRKA Slovenia"]},
+      pret: {$gte: 7}
+    },
+    { _id: 0, _class: 0}
+)
+
+
+db.produse.find( 
+    { 
+	 "indicatii": {$in: ["analgezic", "antipiretic", "antiinflamator"]} 
+	},
+    { 
+	 "_id": 0, 
+	 "_class": 0
+	}
+).sort(
+	{
+	 "denComerciala": 1
+	})
+	
+
+db.produse.find(
+    {$or: [
+        {"bbd": {$lt: new Date("2021-12-30")}},
+        {"pret": {$gt: 30}}
+        ]
+})
+.project({"denComerciala": 1, "pret": 1, "cantitate": 1, "_id": 0})
+.sort({"bbd": 1, "denComerciala": 1})
+
+
+
+// AGREGARI ->
+db.produse.aggregate(
+    [
+        { $match: { $or: [
+                { cantitate: { $gte: 5}},
+                { pret: { $gte: 40}}
+            ]}},
+        { $project: {
+            denComerciala: 1,
+            producator: 1,
+            pret: 1,
+            cantitate: 1,
+            valoare: { $multiply: ["$pret", "$cantitate"]},
+            _id: 0
+        }},
+        { $sort: {valoare: 1}}
+])
+
+
+db.produse.aggregate(
+    [
+        { $unwind: "$indicatii"},
+        { $group: {"_id": "$indicatii"}}
+])
+
+
+
+db.produse.aggregate(
+    [
+        { $match: {
+            "pret": {$gte: 4}}
+        },
+        { $addFields: {
+            valoare: { $multiply: ["$pret", "$cantitate"]}}
+        },
+        { $group: { 
+            _id: "$producator", valoare: {$sum: "$valoare"}}
+        },
+        { $sort: {
+            valoare: 1}
+        },
+        { $match: {
+            "_id": {$ne: null}}
+        }
+])
+
+
+
+db.produse.aggregate([
+    {
+        $bucket: {
+              groupBy: "$pret",
+              boundaries: [ 0, 20, 40, 60 ],
+              default: "Alte",
+              output: {
+                 "Nr produse": {$sum: 1},
+                 "Produs": { $push: {
+                    Denumire: "$denComerciala", 
+                    DCI: "$dci.denDci"
+                 } }
+              }
+            }
+    }   
+])
+
+
+
+db.produse.aggregate([
+    {
+        $addFields: {
+            valoare: { $multiply: ["$pret", "$cantitate"]}, 
+            BBD: { $year: "$bbd"}}
+    },
+    {
+        $facet: {
+            "Dupa valoare": [{
+                        $bucket: {
+                            groupBy: "$valoare",
+                            boundaries: [ 0, 200, 400, 600, 800 ],
+                            default: "Alta valoare",
+                            output: {
+                                "Nr produse": {$sum: 1},
+                                "Produs": { $push: {
+                                        Denumire: "$denComerciala", 
+                                        DCI: "$dci.denDci"
+                                } }
+                            }
+                        }
+            }],
+            "Dupa anul exp": [{
+                        $bucket: {
+                            groupBy: "$BBD",
+                            boundaries: [ 2020, 2021, 2022, 2023 ],
+                            default: "Alti ani",
+                            output: {
+                                "Nr produse": {$sum: 1},
+                                "Produs": { $push: {
+                                        Denumire: "$denComerciala", 
+                                        DCI: "$dci.denDci"
+                                } }
+                            }
+                        }
+            }]
+        }
+    }
+])
+
+
+
+
+
+
+
+
+
+//-------------------------------------------------------------------------
+// INSERTURI -> 
+{
+    "denComerciala": "Algocalmin cp. 500mg",
+    "concentratie": "500 mg",
+    "producator": "Zentiva",
+    "pret": 7.43,
+    "cantitate": 40,
+    "bbd": "2022-04-30",
+    "dci": {
+        "denDci": "metamizolum natricum",
+        "grupaAtc": "N02BB02"
+    },
+    "indicatii": [
+        "analgezic", "antipiretic"
+        ]
+}
+
+
+{
+    "denComerciala": "Bimagan 0,1 Mg/Ml",
+    "concentratie": "0,1 mg/ml",
+    "producator": "Rompharm",
+    "pret": 45.08,
+    "cantitate": 16,
+    "bbd": "2024-08-30",
+    "dci": {
+        "denDci": "bimatoprostum",
+        "grupaAtc": "S01EE03"
+    },
+    "indicatii": [
+        "antiglaucomatos", "miotic"
+        ]
+}
+
+
+{
+    "denComerciala": "Betabioptal 1,3 Mg/G + 2,5 Mg/G",
+    "concentratie": "1,3 Mg/G + 2,5 Mg/G",
+    "producator": "Thea",
+    "pret": 14.68,
+    "cantitate": 15,
+    "bbd": "2022-02-28",
+    "dci": {
+        "denDci": "betamethasonum + cloramphenicolum",
+        "grupaAtc": "D07CC01"
+    },
+    "indicatii": [
+        "antiinflamator", "corticosteroid", "antibiotic"
+        ]
+}
+
+
+{
+    "denComerciala": "Codeina Fosfat Lph 15 Mg",
+    "concentratie": "15 mg",
+    "producator": "Labormed Pharma",
+    "pret": 3.45,
+    "cantitate": 25,
+    "bbd": "2023-01-30",
+    "dci": {
+        "denDci": "codeinum",
+        "grupaAtc": "R05DA04"
+    },
+    "indicatii": [
+        "antitusiv"
+        ]
+}
+
+
+{
+    "denComerciala": "Dexametazona Krka 4 Mg",
+    "producator": "KRKA Slovenia",
+    "pret": 35.53,
+    "cantitate": 5,
+    "dci": {
+        "denDci": "dexamethasonum"
+    },
+    "indicatii": [
+        "corticosteroid"
+        ]
+}
+
+
+{
+    "denComerciala": "Dicarbocalm Control",
+    "concentratie": "20 mg",
+    "pret": 35,
+    "cantitate": 25,
+    "bbd": "2022-09-30",
+    "dci": {
+        "denDci": "pantoprazolum"
+    }
+}
+
+
+{
+    "denComerciala": "Doloxib 90 Mg",
+    "concentratie": "90 mg",
+    "pret": 65.18,
+    "cantitate": 4,
+    "bbd": "2023-02-28",
+    "dci": {
+        "denDci": "etoricoxibum",
+        "grupaAtc": "M01AH05"
+    },
+    "indicatii": [
+        "antiinflamator", 
+        "antireumatic"
+    ]
+}
+
+
+{
+    "denComerciala": "Enalapril 10 Mg",
+    "concentratie": "10 mg",
+    "producator": "Terapia",
+    "pret": 4.21,
+    "cantitate": 65,
+    "bbd": "2023-10-30",
+    "dci": {
+        "denDci": "enalaprilum",
+        "grupaAtc": "C09AA02"
+    }
+}
+
+
+{
+    "denComerciala": "Enap 20 Mg",
+    "producator": "KRKA Slovenia",
+    "pret": 6.96,
+    "cantitate": 65,
+    "bbd": "2021-12-30",
+    "dci": {
+        "denDci": "enalaprilum",
+        "grupaAtc": "C09AA02"
+    },
+    "indicatii": [
+        "antihipertensiv"
+    ]
+}
+
+
+{
+    "denComerciala": "Azitromicina Terapia 500 Mg",
+    "concentratie": "500 mg",
+    "producator": "Terapia",
+    "pret": 17.63,
+    "cantitate": 36,
+    "bbd": "2023-11-30",
+    "dci": {
+        "denDci": "azithromycinum",
+        "grupaAtc": "J01FA10"
+    },
+    "indicatii": [
+        "antibiotic"
+    ]
+}
+
+
+{
+    "denComerciala": "Azitrox 200 Mg/5 Ml",
+    "producator": "Zentiva",
+    "pret": 11.28,
+    "cantitate": 15,
+    "bbd": "2022-11-30",
+    "dci": {
+        "denDci": "azithromycinum",
+        "grupaAtc": "J01FA10"
+    },
+    "indicatii": [
+        "antibiotic"
+    ]
+}
+
+
+{
+    "denComerciala": "Aspenter 75 Mg",
+    "concentratie": "75 Mg",
+    "producator": "Terapia",
+    "pret": 13.5,
+    "cantitate": 125,
+    "bbd": "2022-10-30",
+    "dci": {
+        "denDci": "acidum acetylsalicylicum"
+    },
+    "indicatii": [
+        "analgezic",
+        "antipiretic",
+        "antiinflamator",
+        "antitrombotic"
+    ]
+}
+
+
+{
+    "denComerciala": "Cefuroxima 500 Mg",
+    "producator": "ATB Iasi",
+    "pret": 19.61,
+    "cantitate": 40,
+    "dci": {
+        "denDci": "cefuroximum"
+    },
+    "indicatii": [
+        "antibiotic"
+    ]
+}
+
+
+{
+    "denComerciala": "Bilobil 40 Mg",
+    "pret": 30.06,
+    "cantitate": 5
+}
+
